@@ -2,7 +2,6 @@
 
 **Nero HTTP** é um servidor HTTP/HTTPS escrito em **C**, com foco em aprendizado, modularidade e simplicidade. Ideal para quem deseja entender como funciona um servidor web na prática — desde a recepção de conexões até o envio de arquivos e criptografia com OpenSSL.
 
----
 
 ## ✨ Recursos
 
@@ -14,7 +13,16 @@
 - 🧱 Compilação multiplataforma com **CMake**
 - 💡 Ideal para estudos, POCs ou servidores locais simples
 
----
+
+## 💻 Suporte a Plataformas
+
+O **Nero HTTP** é compatível com os principais sistemas operacionais:
+
+| Sistema Operacional | Suporte | Observações |
+|---------------------|---------|-------------|
+| 🐧 **Linux**        | ✅ Total |              |
+| 🪟 **Windows**      | ✅ Total | Via MSYS2    |
+| 🍎 **macOS**        | ✅ Total | Via homebrew |
 
 ## 📦 Requisitos
 
