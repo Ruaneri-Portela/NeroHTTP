@@ -6,61 +6,96 @@ static const char *html_doctype = "<!DOCTYPE html>";
 
 size_t HTML_Document_Fill(const HTML_document *document, char *buffer, size_t max_len)
 {
-    if (!document || !buffer)
+    if (!document || !buffer || max_len == 0)
         return 0;
-    size_t local_written = strlen(document->doctype);
-    snprintf(buffer, max_len, "%s", document->doctype);
-    HTML_Tag_Fill(document->html, buffer, &local_written, max_len);
 
-    *(buffer + local_written + 1) = '\0';
-    return local_written;
+    size_t written = 0;
+    int len = snprintf(buffer, max_len, "%s", document->doctype);
+
+    if (len < 0 || (size_t)len >= max_len)
+        return 0; // Erro ou buffer insuficiente
+
+    written += (size_t)len;
+
+    HTML_Tag_Fill(document->html, buffer, &written, max_len);
+
+    // Garante que a string esteja terminada em nulo, apenas se ainda houver espaço
+    if (written < max_len)
+        buffer[written] = '\0';
+    else
+        buffer[max_len - 1] = '\0'; // Trunca e garante o nulo no fim
+
+    return written;
 }
 
 void HTML_Tag_Fill(const HTML_tag *tag, char *buffer, size_t *written, size_t max_len)
 {
-    if (!tag || !buffer || !written)
+    if (!tag || !buffer || !written || *written >= max_len)
         return;
 
-    *(buffer + *written) = '<';
-    *written += 1;
-
-    snprintf(buffer + *written, max_len, "%s", tag->name);
-    *written += strlen(tag->name);
+    size_t space_left = max_len - *written;
+    int len = snprintf(buffer + *written, space_left, "<%s", tag->name);
+    if (len < 0 || (size_t)len >= space_left)
+        return;
+    *written += (size_t)len;
 
     if (tag->attributes)
+    {
         for (size_t i = 0; tag->attributes[i] != NULL; i++)
         {
             HTML_Attribute_Fill(tag->attributes[i], buffer, written, max_len);
-        };
+            if (*written >= max_len)
+                return;
+        }
+    }
 
-    *(buffer + *written) = '>';
-    *written += 1;
+    space_left = max_len - *written;
+    len = snprintf(buffer + *written, space_left, ">");
+    if (len < 0 || (size_t)len >= space_left)
+        return;
+    *written += (size_t)len;
 
     if (!tag->void_element)
     {
         if (tag->children)
+        {
             for (size_t i = 0; tag->children[i] != NULL; i++)
             {
                 HTML_Tag_Fill(tag->children[i], buffer, written, max_len);
+                if (*written >= max_len)
+                    return;
             }
+        }
 
         if (tag->text_content)
         {
-            snprintf(buffer + *written, max_len, "%s", tag->text_content);
-            *written += strlen(tag->text_content);
+            space_left = max_len - *written;
+            len = snprintf(buffer + *written, space_left, "%s", tag->text_content);
+            if (len < 0 || (size_t)len >= space_left)
+                return;
+            *written += (size_t)len;
         }
 
-        snprintf(buffer + *written, max_len, "</%s>", tag->name);
-        *written += 3 + strlen(tag->name);
+        space_left = max_len - *written;
+        len = snprintf(buffer + *written, space_left, "</%s>", tag->name);
+        if (len < 0 || (size_t)len >= space_left)
+            return;
+        *written += (size_t)len;
     }
 }
 
 void HTML_Attribute_Fill(const HTML_attribute *attribute, char *buffer, size_t *written, size_t max_len)
 {
-    if (!attribute || !buffer || !written)
+    if (!attribute || !buffer || !written || *written >= max_len)
         return;
-    snprintf(buffer + *written, max_len, " %s=\"%s\"", attribute->name, attribute->content);
-    *written += 4 + strlen(attribute->name) + strlen(attribute->content);
+
+    size_t space_left = max_len - *written;
+    int len = snprintf(buffer + *written, space_left, " %s=\"%s\"", attribute->name, attribute->content);
+
+    if (len < 0 || (size_t)len >= space_left)
+        return;
+
+    *written += (size_t)len;
 }
 
 size_t HTML_Document_LookupSize(const HTML_document *document)
@@ -78,17 +113,17 @@ size_t HTML_Tag_LookupSize(const HTML_tag *tag)
         return 0;
     size_t size = 0;
 
-    // < >
+    // <>
     if (tag->void_element)
     {
-        size += 3 + strlen(tag->name);
+        size += strlen(tag->name) + 2;
     }
     else
     {
-        //< ></>
+        //<></>
         if (tag->text_content)
             size += strlen(tag->text_content);
-        size += 6 + (strlen(tag->name) * 2);
+        size += (strlen(tag->name) * 2) + 2 + 3;
     }
     if (tag->children)
         for (size_t i = 0; tag->children[i] != NULL; i++)
@@ -107,7 +142,7 @@ size_t HTML_Attribute_LookupSize(const HTML_attribute *attribute)
 {
     if (!attribute)
         return 0;
-    // " ="
+    //[ =""]
     return strlen(attribute->content) + strlen(attribute->name) + 4;
 }
 
