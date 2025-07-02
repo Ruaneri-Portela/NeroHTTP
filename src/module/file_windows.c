@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #include <nero_html.h>
 #include <nero_module_file.h>
 #include <nero_pages.h>
@@ -287,3 +288,5 @@ const HTTP_Module module_file = {
     .load = NULL,
     .action = file_action,
     .destroy = NULL};
+    
+#endif
